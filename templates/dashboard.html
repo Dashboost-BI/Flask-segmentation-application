@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title></title>
+    <link
+      href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script>
+      const results = {{results|safe}}
+    </script>
+    <script>
+      const plots = {{plots|safe}}
+    </script>
+  </head>
+  <body>
+    <script>
+      let layout = {
+        plot_bgcolor: "rgba(0,0,0,0)",
+        paper_bgcolor: "rgba(0,0,0,0)",
+      };
+    </script>
+    <div class="min-h-screen w-screen bg-gray-100 px-40 py-20">
+      <div class="block w-full my-10 flex items-center justify-center">
+        <span class="text-4xl">Segmentation Results</span>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div
+          class="w-full h-full bg-white rounded-lg border-gray-300 p-4 shadow-lg"
+        >
+          <div id="heatmap"></div>
+        </div>
+        <div
+          class="w-full h-full bg-white rounded-lg border-gray-300 p-4 shadow-lg"
+        >
+          <div id="featureImportance"></div>
+        </div>
+        <div
+          class="w-full h-full bg-white rounded-lg border-gray-300 p-4 shadow-lg"
+        >
+          <select
+            onChange="changeHistogram()"
+            id="histogramInput"
+            class="mt-1 py-2 px-3 w-40 border border-text-300 bg-transparent border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900"
+          >
+            {% for col in histogramCols %}
+            <option value="{{col}}">{{col}}</option>
+            {% endfor %}
+          </select>
+          <div id="featureHistogram"></div>
+        </div>
+        <div
+          class="w-full h-full bg-white rounded-lg border-gray-300 p-4 shadow-lg"
+        >
+          <select
+            onChange="changeScatterPlot()"
+            id="scatterPlotInput"
+            class="mt-1 py-2 px-3 w-40 border border-text-300 bg-transparent border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900"
+          >
+            {% for col in histogramCols %}
+            <option value="{{col}}">{{col}}</option>
+            {% endfor %}
+          </select>
+          <div id="scatterPlot"></div>
+        </div>
+      </div>
+    </div>
+    <!-- HELPER FUNCTIONS -->
+    <script>
+      const changeHistogram = () => {
+        ApexCharts.exec(
+          "histogram",
+          "updateOptions",
+          getHistogramData(document.getElementById("histogramInput").value),
+          false,
+          true
+        );
+      };
+      const getHistogramData = (value) => {
+        return {
+          series: [
+            {
+              data: results["histogram"][value]["y"],
+            },
+          ],
+          chart: {
+            id: "histogram",
+            type: "bar",
+            height: 350,
+          },
+          plotOptions: {
+            bar: {
+              borderRadius: 4,
+              horizontal: true,
+            },
+          },
+          dataLabels: {
+            enabled: false,
+          },
+          xaxis: {
+            categories: results["histogram"][value]["x"],
+          },
+          title: {
+            text: "Histogram of " + value,
+          },
+        };
+      };
+      const getScatterData = (value) => {
+        let scatterSeries = [];
+        Object.keys(plots[value]).map((score, index) =>
+          scatterSeries.push({
+            name: score,
+            data: plots[value][score],
+          })
+        );
+        return {
+          series: scatterSeries,
+          chart: {
+            animations: {
+              enabled: false,
+            },
+            id: "scatter",
+            height: 350,
+            type: "scatter",
+            zoom: {
+              enabled: true,
+              type: "xy",
+            },
+          },
+          xaxis: {
+            tickAmount: 10,
+          },
+          yaxis: {
+            tickAmount: 7,
+          },
+          title: {
+            text: "Scatter plot of scores for " + value,
+          },
+        };
+      };
+      const changeScatterPlot = () => {
+        let scatterPlotInput = document.getElementById("scatterPlotInput")
+          .value;
+        ApexCharts.exec(
+          "scatter",
+          "updateOptions",
+          getScatterData(scatterPlotInput),
+          false,
+          true
+        );
+      };
+    </script>
+    <!-- RENDER HEATMAP -->
+    <script>
+      let series = [];
+      results["corr_heatmap"]["columns"].map((col, index) =>
+        series.push({
+          name: col,
+          data: results["corr_heatmap"]["values"][index],
+        })
+      );
+      console.log(series, results["corr_heatmap"]["columns"]);
+      var options = {
+        series: series,
+
+        chart: {
+          height: 350,
+          type: "heatmap",
+        },
+        dataLabels: {
+          enabled: false,
+        },
+        colors: ["#008FFB"],
+        xaxis: {
+          type: "category",
+          categories: results["corr_heatmap"]["columns"],
+        },
+        title: {
+          text: "Feature Correlation Heatmap",
+        },
+      };
+
+      var chart = new ApexCharts(document.querySelector("#heatmap"), options);
+      chart.render();
+    </script>
+    <!-- RENDER FEATURE IMPORTANCE GRAPH -->
+    <script>
+      var optionsFeatureImportance = {
+        series: [
+          {
+            data: results["feature_importance"]["importance"],
+          },
+        ],
+        chart: {
+          type: "bar",
+          height: 350,
+        },
+        plotOptions: {
+          bar: {
+            borderRadius: 4,
+            horizontal: true,
+          },
+        },
+        dataLabels: {
+          enabled: false,
+        },
+        xaxis: {
+          categories: results["feature_importance"]["features"],
+        },
+        title: {
+          text: "Feature Importance",
+        },
+      };
+
+      var chart = new ApexCharts(
+        document.querySelector("#featureImportance"),
+        optionsFeatureImportance
+      );
+      chart.render();
+    </script>
+    <!-- RENDER HISTOGRAM -->
+    <script>
+      var optionsfeatureHistogram = getHistogramData(
+        Object.keys(results["histogram"])[0]
+      );
+      var chart = new ApexCharts(
+        document.querySelector("#featureHistogram"),
+        optionsfeatureHistogram
+      );
+      chart.render();
+    </script>
+
+    <!-- RENDER SCATTERPLOT -->
+    <script>
+      var optionsScatterPlot = getScatterData(Object.keys(plots)[0]);
+      var chart = new ApexCharts(
+        document.querySelector("#scatterPlot"),
+        optionsScatterPlot
+      );
+      chart.render();
+    </script>
+  </body>
+</html>

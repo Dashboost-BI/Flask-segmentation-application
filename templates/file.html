@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title></title>
+    <link
+      href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div
+      class="min-h-screen w-screen bg-gray-50 flex px-40 flex-col justify-center items-center"
+    >
+      <div class="w-2/5">
+        <div class="mt-20 overflow-scroll">
+          <span class="text-sm text-indigo-500 opacity-50">file preview</span>
+          <table class="table-auto w-full">
+            <thead>
+              <tr>
+                {% for col in columns %}
+                <th
+                  class="border border-indigo-500 px-4 py-2 text-indigo-600 font-medium"
+                >
+                  {{ col }}
+                </th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in data %}
+              <tr>
+                {% for point in row %}
+                <td class="border border-indigo-500 px-4 py-2 text-indigo-600">
+                  {{ point }}
+                </td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="flex flex-col mt-10 justify-start items-start">
+          <form method="POST" action="{{ url_for('dashboard') }}" enctype="multipart/form-data>
+            <div class="my-5 inline-block">
+              <div class="inline-block w-15">
+                <label
+                  for="index_col"
+                  class="block text-sm font-medium text-gray-800"
+                >
+                  Index Column
+                </label>
+                <select
+                  id="index_col"
+                  name="index_col"
+                  autocomplete="index_col"
+                  class="mt-1 py-2 px-3 w-40 border border-text-300 bg-transparent border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900"
+                >
+                  {% for col in rawColumns %}
+                  <option>{{col}}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="my-5 inline-block">
+              <div class="inline-block w-15">
+                <label
+                  for="main_col"
+                  class="block text-sm font-medium text-gray-800"
+                >
+                  Target Column
+                </label>
+                <select
+                  id="main_col"
+                  name="main_col"
+                  autocomplete="main_col"
+                  class="mt-1 py-2 px-3 w-40 border border-text-300 bg-transparent border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900"
+                >
+                  {% for col in rawColumns %}
+                  <option>{{col}}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <input type="hidden" value="{{jsonDf}}" id="jsonDf" name="jsonDf" />
+            <div class="mt-10">
+              <button class="bg-indigo-500 px-4 py-2 rounded-md text-white">Submit</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
